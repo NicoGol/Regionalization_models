@@ -249,20 +249,12 @@ class Solver:
                 neighbors[v] = n2[v].copy()
             neighbors[v1] += [v2]
             neighbors[v2] += [v1]
-            c = 0
-            for e in neighbors.keys():
-                c += len(neighbors[e])
-            if 2 * len(vertex) - 2 != c:
-                print(c)
-                print(len(vertex))
             edges = e1.copy() + e2.copy()#[e for e in self.SCT.edges.keys() if (e[0] in r1 and e[1] in r1) or (e[0] in r2 and e[1] in r2)]
             edges += [(v1,v2)]
             concatree = HPTree(vertex,neighbors,edges,0, center={center:(0,0)},index=-1)
             e, h, h1, h2 = concatree.find_best_cut(1,sc)
             vertex1 = concatree.edges[e[0]][e[0][0]]
             vertex2 = concatree.edges[e[0]][e[0][1]]
-            if len(vertex1) + len(vertex2) != len(vertex):
-                print('PROUT')
             return e[0], h[0], h1[0], h2[0], vertex1, vertex2, neighbors, edges
 
     def regions_to_gdp(self,k,colors):

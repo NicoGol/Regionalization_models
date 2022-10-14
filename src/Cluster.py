@@ -16,7 +16,7 @@ class Cluster:
 
     def find_shortest_edge(self,cluster):
         best_u = self.v[0]
-        best_dist = 1
+        best_dist = float('inf')
         best_v = cluster.get_v()[0]
         for v in cluster.get_v():
             if v in self.e:

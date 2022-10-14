@@ -5,38 +5,36 @@ import time as t
 def heterogeneity(vertex):
     return HPTree.dist[vertex].loc[vertex].sum().sum() / (len(vertex) * 2)
 
-def combine_sub_h(t1,t2):
-    new_sub_h = {}
-    for i in t1.sub_h.keys():
-        for j in t2.sub_h.keys():
-            h = t1.sub_h[i][0] + t2.sub_h[j][0]
-            if i+j in new_sub_h:
-                if h < new_sub_h[(i+j)][0]:
-                    new_sub_h[(i + j)] = (h,t1.sub_h[i][1] + t2.sub_h[j][1])
+def combine_best_h(t1,t2):
+    new_best_h = {}
+    for i in t1.best_h.keys():
+        for j in t2.best_h.keys():
+            h = t1.best_h[i][0] + t2.best_h[j][0]
+            if i+j in new_best_h:
+                if h < new_best_h[(i+j)][0]:
+                    new_best_h[(i + j)] = (h,t1.best_h[i][1] + t2.best_h[j][1])
             else:
-                new_sub_h[(i + j)] = (h,t1.sub_h[i][1] + t2.sub_h[j][1])
-    return new_sub_h
+                new_best_h[(i + j)] = (h,t1.best_h[i][1] + t2.best_h[j][1])
+    return new_best_h
+
+def clearHPT():
+    HPTree.dict_regions = {}
+    HPTree.dist = None
+    HPTree.identical_nodes = 0
 
 
 class HPTree():
     dist = None
-    n_partitions = 0
-    n_cuts = 0
-    he = [[]]
-    regions = [[]]
     dict_regions = {}
-    dict_he = {}
-    dict_neighbors = {}
-    index_node = 0
-    arch = {}
-    def __init__(self, vertex, neighbors, edges, h, center=None, index=0):
-        self.index = index
+    identical_nodes = 0
+    def __init__(self, vertex, neighbors, edges, h, center=None):
         self.vertex = vertex
         self.neighbors = neighbors
         self.h = h
         self.edges = {}
         self.center = center
-        self.sub_h = {1:(h,[self.index])}
+        self.best_h = {1:(h,[self])}
+        self.children = []
         if type(edges) is list:
             self.create_arch(edges)
         else:
@@ -48,10 +46,13 @@ class HPTree():
         if len(self.vertex) > 1:
             self.middle_edge = max(self.center.keys(),key=(lambda e: min(self.center[e])))
 
+    def copy(self):
+        return HPTree(self.vertex.copy(),self.neighbors.copy(),self.edges.copy(),self.h,self.center.copy())
+
     def h_after_cut(self,e):
-        t1 = set(self.vertex).intersection(self.edges[e][e[0]])
-        t2 = set(self.vertex).intersection(self.edges[e][e[1]])
-        h1, h2 = heterogeneity(list(t1)), heterogeneity(list(t2))
+        #t1 = set(self.vertex).intersection(self.edges[e][e[0]])
+        #t2 = set(self.vertex).intersection(self.edges[e][e[1]])
+        h1, h2 = heterogeneity(self.edges[e][e[0]]), heterogeneity(self.edges[e][e[1]])#h1, h2 = heterogeneity(list(t1)), heterogeneity(list(t2))
         return h1, h2
 
     def create_arch(self,T):
@@ -78,53 +79,52 @@ class HPTree():
                     self.edges[new_e][To] += val
                     self.spread(val,v,To)
 
-    def find_regions(self, k, limit_vertex, limit_depth, w_list, sc_list, n_best, index_w=0,index_sc=0, depth=0,talk=False):
-        if talk:
-            if depth >= 2:
-                talk = False
-            print()
-            print('Node '+str(self.index)+ ' of size '+str(len(self.vertex))+ ' and depth = '+str(depth))
-        HPTree.dict_regions[self.index] = self.vertex
-        HPTree.dict_he[self.index] = self.h
-        HPTree.dict_neighbors[self.index] = self.neighbors
-        if len(self.vertex) > 1 and len(self.vertex) > limit_vertex * len(HPTree.dist) and depth < limit_depth:
-            if index_w < len(w_list)-1 and depth == w_list[index_w+1][0]:
-                index_w += 1
-            w = w_list[index_w][1]
-            if index_sc < len(sc_list)-1 and depth == sc_list[index_sc+1][0]:
-                index_sc += 1
-            sc = sc_list[index_sc][1]
-            if depth == limit_depth-1:
-                w=1
-            new_indices = list(range(HPTree.index_node + 1, HPTree.index_node + 1 + 2*w))
-            new_trees = self.tree_partitioning(w,sc,n_best,new_indices,talk=talk)
+    def compute_best_h(self,w,k):
+        dicts_h = []
+        for i in range(w):
+            dicts_h.append(combine_best_h(self.children[i * 2], self.children[i * 2 + 1]))
+        l = 2
+        ok = True
+        while ok and l <= k:
+            best_d = None
+            for d in dicts_h:
+                if l in d and (best_d is None or d[l][0] < best_d[l][0]):
+                    best_d = d
+            if best_d is None:
+                ok = False
+            else:
+                self.best_h[l] = best_d[l]
+                l += 1
+
+    def find_regions(self, k, limit_depth, w_list, sc_list, n_best, index_w=0,index_sc=0, depth=0,talk=False):
+        if str(self.vertex) in HPTree.dict_regions:
+            HPTree.identical_nodes += 1
+        else:
             if talk:
-                print('children of node '+str(self.index)+' are : '+str(new_indices))
-            HPTree.arch[self.index] = new_indices
-            HPTree.index_node += len(new_trees)
-            HPTree.n_partitions += 1
-            dicts_h = []
-            for tree in new_trees:
-                tree.find_regions(k,limit_vertex, limit_depth, w_list, sc_list, n_best, index_w, index_sc, depth=depth+1,talk=talk)
-            for i in range(w):
-                dicts_h.append(combine_sub_h(new_trees[i*2],new_trees[i*2+1]))
-            l = 2
-            ok = True
-            while ok and l<= k:
-                best_d = None
-                for d in dicts_h:
-                    if l in d and (best_d is None or d[l][0] < best_d[l][0]):
-                        best_d = d
-                if best_d is None:
-                    ok = False
-                else:
-                    self.sub_h[l] = best_d[l]
-                    l += 1
+                if depth >= 2:
+                    talk = False
+                print()
+                print('Node of size '+str(len(self.vertex))+ ' and depth = '+str(depth))
+            HPTree.dict_regions[str(self.vertex)] = self
+            if len(self.vertex) > 1 and depth < limit_depth:
+                if index_w < len(w_list)-1 and depth == w_list[index_w+1][0]:
+                    index_w += 1
+                w = w_list[index_w][1]
+                if index_sc < len(sc_list)-1 and depth == sc_list[index_sc+1][0]:
+                    index_sc += 1
+                sc = sc_list[index_sc][1]
+                if depth == limit_depth-1:
+                    w=1
+                new_trees = self.tree_partitioning(w,sc,n_best,talk=talk)
+                for tree in new_trees:
+                    self.children.append(tree)
+                    tree.find_regions(k, limit_depth, w_list, sc_list, n_best, index_w, index_sc, depth=depth+1,talk=talk)
+                self.compute_best_h(w,k)
 
 
 
 
-    def tree_partitioning(self,w,sc,n_best,indices,talk=False):
+    def tree_partitioning(self,w,sc,n_best,talk=False):
         if talk:
             t1 = t.time()
         e,h,h1,h2 = self.find_best_cut(w,sc,n_best=n_best)
@@ -134,35 +134,53 @@ class HPTree():
         if talk:
             t1 = t.time()
         new_trees = []
-        HPTree.n_cuts += w
         for i in range(w):
             neighbors = self.neighbors.copy()
-            vertex1 = list(set(self.vertex).intersection(self.edges[e[i]][e[i][0]]))
-            vertex2 = list(set(self.vertex).intersection(self.edges[e[i]][e[i][1]]))
+            #vertex1 = list(set(self.vertex).intersection(self.edges[e[i]][e[i][0]]))
+            #vertex2 = list(set(self.vertex).intersection(self.edges[e[i]][e[i][1]]))
+            vertex1 = self.edges[e[i]][e[i][0]]
+            vertex2 = self.edges[e[i]][e[i][1]]
             center1, center2 = {}, {}
-            for edge in self.center.keys():
+            edges1, edges2 = {}, {}
+            for edge in self.edges.keys():#for edge in self.center.keys():
                 if edge != e[i]:
                     if edge[0] in vertex1:
                         if e[i][0] in self.edges[edge][edge[0]]:
-                            center1[edge] = (self.center[edge][0]-len(vertex2),self.center[edge][1])
+                            edges1[edge] = {edge[0]:[v for v in self.edges[edge][edge[0]] if v in vertex1],edge[1]:self.edges[edge][edge[1]].copy()}
+                            #center1[edge] = (self.center[edge][0]-len(vertex2),self.center[edge][1])
                         else:
-                            center1[edge] = (self.center[edge][0],self.center[edge][1]-len(vertex2))
+                            edges1[edge] = {edge[0]: self.edges[edge][edge[0]].copy(),
+                                            edge[1]: [v for v in self.edges[edge][edge[1]] if v in vertex1]}
+                            #center1[edge] = (self.center[edge][0],self.center[edge][1]-len(vertex2))
+                        center1[edge] = (len(edges1[edge][edge[0]]),len(edges1[edge][edge[1]]))
                     else:
                         if e[i][0] in self.edges[edge][edge[0]]:
-                            center2[edge] = (self.center[edge][0]-len(vertex1),self.center[edge][1])
+                            edges2[edge] = {edge[0]: [v for v in self.edges[edge][edge[0]] if v in vertex2],
+                                            edge[1]: self.edges[edge][edge[1]].copy()}
+                            #center2[edge] = (self.center[edge][0]-len(vertex1),self.center[edge][1])
                         else:
-                            center2[edge] = (self.center[edge][0],self.center[edge][1]-len(vertex1))
+                            edges2[edge] = {edge[0]: self.edges[edge][edge[0]].copy(),
+                                            edge[1]: [v for v in self.edges[edge][edge[1]] if v in vertex2]}
+                            #center2[edge] = (self.center[edge][0],self.center[edge][1]-len(vertex1))
+                        center2[edge] = (len(edges2[edge][edge[0]]), len(edges2[edge][edge[1]]))
             neighbors[e[i][0]] = [v for v in neighbors[e[i][0]] if v!=e[i][1]]
             neighbors[e[i][1]] = [v for v in neighbors[e[i][1]] if v!=e[i][0]]
-
-            new_trees += [HPTree(vertex1,neighbors,self.edges,h1[i], center=center1, index=indices[2*i])]
-            new_trees += [HPTree(vertex2, neighbors, self.edges, h2[i], center=center2, index=indices[2*i+1])]
+            if str(vertex1) in HPTree.dict_regions:
+                new_trees += [HPTree.dict_regions[str(vertex1)]]
+            else:
+                new_trees += [HPTree(vertex1,neighbors,edges1,h1[i], center=center1)]
+            if str(vertex2) in HPTree.dict_regions:
+                new_trees += [HPTree.dict_regions[str(vertex2)]]
+            else:
+                new_trees += [HPTree(vertex2, neighbors, edges2, h2[i], center=center2)]
         if talk:
             t2 = t.time() - t1
             print('time to create ' + str(w) + ' new trees : ' + str(t2))
         return new_trees
 
     def find_best_cut(self, w, sc, n_best=5):
+        if w==1:
+            n_best=1
         best_h1, best_h2 = [0.0 for _ in range(n_best)], [0.0 for _ in range(n_best)]
         best_h1[0], best_h2[0] = self.h_after_cut(self.middle_edge)
         best_cut = [self.middle_edge for _ in range(n_best)]
@@ -182,8 +200,6 @@ class HPTree():
                 for b2 in self.neighbors[b1]:
                     e = (min(b1,b2),max(b1,b2))
                     if e not in calculated:
-                        if e not in self.edges:
-                            print('AIE')
                         calculated += [e]
                         h1, h2 = self.h_after_cut(e)
                         h = h1 + h2
@@ -227,20 +243,3 @@ class HPTree():
                                                                      best_h[i_max_diff]
 
         return w_best_cut, w_best_h, w_best_h1, w_best_h2
-
-    def regions_to_onehot(self):
-        R = pd.DataFrame(0, index=self.vertex, columns=HPTree.dict_regions.keys())
-        for i in HPTree.dict_regions.keys():
-            for el in HPTree.dict_regions[i]:
-                R.loc[el,i] = 1
-        return R
-
-    def clear(self):
-        HPTree.regions = [[]]
-        HPTree.n_cuts = 0
-        HPTree.n_partitions = 0
-        HPTree.he = [[]]
-        HPTree.index_node = 0
-        HPTree.arch = {}
-        HPTree.dict_regions = {}
-        HPTree.dict_he = {}

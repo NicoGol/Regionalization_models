@@ -1,41 +1,87 @@
 from data import *
-from Solver import Solver
-from LNS import LNS
+from HPR import HPR
 from redcap import *
 
-k=10
-print('start data preparation')
-t1 = t.time()
-CA_vote_2004 = percentage_bush_2004()
-t2 = t.time()
-print('end data preparation '+ str(t2-t1))
-print('number of nodes: '+ str(len(CA_vote_2004)))
-root = Solver(CA_vote_2004,['bush_votes_perc'],talk=True)
-res,x = root.best_k_regions(k,0.01,5,[(0,2)],[(0,100)],5)
+# k=10
+# edu_BE_dist = pd.read_pickle('../data/education_BE_dist.pkl')
+# edu_BE_cont = pd.read_pickle('../data/education_BE_cont.pkl')
+# HPR,h,regions = HPR(k,[(0,2)],edu_BE_cont,edu_BE_dist,LNS=True,talk=True)
 
-res_redcap, x_redcap, t_redcap = redcap(CA_vote_2004,k,['bush_votes_perc'],talk=True)
+############################################################################
 
-print('my model total heterogeneity : ', res)
+k=15
+Ecoregions_dist = pd.read_pickle('../data/USA_ecoregions_dist.pkl')
+Ecoregions_cont = pd.read_pickle('../data/USA_ecoregions_cont.pkl')
+HPR,h,regions = HPR(k,[(0,2)],Ecoregions_cont,Ecoregions_dist,LNS=True,talk=True)
 
-print('start build-in LNS')
-t1 = t.time()
-h1,r1 = root.LNS(k,10,50)
-t2 = t.time()
-print('end build-in LNS '+ str(t2-t1))
-print('build-in LNS heterogeneity : ', sum(h1.values()))
+############################################################################
 
-print('start LNS')
-t1 = t.time()
-h2,r2 = LNS(root,k,10,50)
-t2 = t.time()
-print('end LNS '+ str(t2-t1))
-print('LNS heterogeneity : ', sum(h2.values()))
+# EU_NUTS3_cont = pd.read_pickle('../data/NUTS1_all_cont.pkl')
+# EU_NUTS3_dist = pd.read_pickle('../data/NUTS1_all_dist.pkl')
+# k=10
+# HPR,h,regions = HPR(k,[(0,2)],EU_NUTS3_cont,EU_NUTS3_dist,LNS=True,talk=True)
 
-# indicators = ['density','gdp_inhabitant','median_age','rate_migration']
+#############################################################################
+
+# k=10
+# EU_NUTS2_cont = pd.read_pickle('../data/NUTS2_all_cont.pkl')
+# EU_NUTS2_dist = pd.read_pickle('../data/NUTS2_all_dist.pkl')
+# HPR,h,regions = HPR(k,[(0,2)],EU_NUTS2_cont,EU_NUTS2_dist,LNS=True,talk=True)
+
+#############################################################################
+
+# EU_NUTS3_cont = pd.read_pickle('../data/NUTS3_all_cont.pkl')
+# EU_NUTS3_dist = pd.read_pickle('../data/NUTS3_all_dist.pkl')
+# k=10
+# HPR,h,regions = HPR(k,[(0,2)],EU_NUTS3_cont,EU_NUTS3_dist,LNS=True,talk=True)
+
+############################################################################
+
+# k=10
+# USA_vote_cont = pd.read_pickle('../data/USA_vote_2004_cont.pkl')
+# USA_vote_dist = pd.read_pickle('../data/USA_vote_2004_dist.pkl')
+# HPR,h,regions = HPR(k,[(0,2)],USA_vote_cont,USA_vote_dist,LNS=True,talk=True)
+
+############################################################################
+
 # k=10
 # print('start data preparation')
 # t1 = t.time()
-# ecodemo_eu = ecodemoEurope(indicators,2019,3)
+# CA_vote_2004 = percentage_bush_2004()
+# t2 = t.time()
+# print('end data preparation '+ str(t2-t1))
+# print('number of nodes: '+ str(len(CA_vote_2004)))
+# root = Solver(CA_vote_2004,['bush_votes_perc'],talk=True)
+# res,x = root.best_k_regions(k,0.01,5,[(0,2)],[(0,100)],5)
+#
+# res_redcap, x_redcap, t_redcap = redcap(CA_vote_2004,k,['bush_votes_perc'],talk=True)
+#
+# print('my model total heterogeneity : ', res)
+#
+# print('start build-in LNS')
+# t1 = t.time()
+# h1,r1 = root.LNS(k,10,50)
+# t2 = t.time()
+# print('end build-in LNS '+ str(t2-t1))
+# print('build-in LNS heterogeneity : ', sum(h1.values()))
+#
+# print('start LNS')
+# t1 = t.time()
+# h2,r2 = LNS(root,k,10,50)
+# t2 = t.time()
+# print('end LNS '+ str(t2-t1))
+# print('LNS heterogeneity : ', sum(h2.values()))
+
+
+##############################################################################################
+
+#indicators = ['density','gdp_inhabitant','median_age','rate_migration']
+# k=10
+# print('start data preparation')
+# t1 = t.time()
+#ecodemo_eu = ecodemoEurope(indicators,2019,3)
+#dist = generate_dist_matrix(ecodemo_eu,indicators)
+#cont = generate_cont_matrix(ecodemo_eu)
 # t2 = t.time()
 # print('end data preparation '+ str(t2-t1))
 # print('number of nodes: '+ str(len(ecodemo_eu)))

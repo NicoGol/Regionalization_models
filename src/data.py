@@ -24,7 +24,7 @@ def percentage_bush_2004(states='all'):
 
         # add names of neighbors as NEIGHBORS value
         gdf.at[index, 'neighbors'] = neighbors
-    #gdf = gdf.set_index('county_fips',drop=True)#[['county_fips', 'county_name', 'state', 'state_po', 'bush_votes_perc','candidatevotes','totalvotes','neighbors','geometry']].set_index('county_fips',drop=True)
+    gdf = gdf.set_index('county_fips',drop=True)#[['county_fips', 'county_name', 'state', 'state_po', 'bush_votes_perc','candidatevotes','totalvotes','neighbors','geometry']].set_index('county_fips',drop=True)
     return gdf
 
 def ecodemoEurope(indicators,year,level):
@@ -64,5 +64,71 @@ def ecodemoEurope(indicators,year,level):
     gdf = gdf.loc[visited]
     return gdf
 
+def ecoregions():
+    gdf = geopandas.read_file('../data/Ecoregions/Ecoregions.shp')
+    gdf['neighbors'] = [[] for _ in range(len(gdf))]
+    for index, row in gdf.iterrows():
+        # get 'not disjoint' countries
+        neighbors = gdf[~gdf.geometry.disjoint(row.geometry)].index.tolist()
+        neighbors.remove(index)
 
+        # add names of neighbors as NEIGHBORS value
+        gdf.at[index, 'neighbors'] = neighbors
+    indicators = gdf.columns[:15]
+    scaler = MinMaxScaler()
+    gdf[indicators] = scaler.fit_transform(gdf[indicators])
+    return gdf
 
+def education_BE():
+    df = pd.read_excel('../data/EcoBelgium/BE_Education_2017.xlsx')
+    gdf = geopandas.read_file('../data/EcoBelgium/communes-belges-2019.shp')
+    gdf[['EDU_LOW_r','EDU_MID_r','EDU_HIGH_r']] = None
+    gdf['niscode'] = pd.to_numeric(gdf['niscode'])
+    gdf = gdf.set_index('niscode')
+    to_drop = []
+    for ind in gdf.index:
+        commune = df.loc[df['CD_MUNTY_REFNIS'] == ind]
+        if len(commune) < 4:
+            to_drop.append(ind)
+        else:
+            tot_pop = commune.loc[commune['CD_ISCED_CL']=='TOT']['MS_POPULATION_25'].array[0]
+            low_pop = commune.loc[commune['CD_ISCED_CL'] == 'LOW']['MS_POPULATION_25'].array[0]
+            mid_pop = commune.loc[commune['CD_ISCED_CL'] == 'MIDDLE']['MS_POPULATION_25'].array[0]
+            high_pop = commune.loc[commune['CD_ISCED_CL'] == 'HIGH']['MS_POPULATION_25'].array[0]
+            gdf.loc[ind,['EDU_LOW_r', 'EDU_MID_r', 'EDU_HIGH_r']] = [low_pop/tot_pop,mid_pop/tot_pop,high_pop/tot_pop]
+    gdf['neighbors'] = [[] for _ in range(len(gdf))]
+    gdf = gdf.drop(to_drop)
+    for index, row in gdf.iterrows():
+        # get 'not disjoint' countries
+        neighbors = gdf[~gdf.geometry.disjoint(row.geometry)].index.tolist()
+        neighbors.remove(index)
+
+        # add names of neighbors as NEIGHBORS value
+        gdf.at[index, 'neighbors'] = neighbors
+    return gdf
+
+def generate_dist_matrix(df, cols, dist_deg=2):
+        Full_order_edges = {}
+        indexes = df.index
+        dist_matrix = pd.DataFrame(0, index=indexes, columns=indexes)
+        for i in range(len(indexes) - 1):
+            index1 = indexes[i]
+            for j in range(i + 1, len(indexes)):
+                index2 = indexes[j]
+                dist = 0
+                for col in cols:
+                    dist += (df.loc[index1, col] - df.loc[index2, col]) ** dist_deg
+                dist_matrix.loc[index1, index2] = dist
+                dist_matrix.loc[index2, index1] = dist
+                if index1 < index2:
+                    Full_order_edges[(index1, index2)] = dist
+                else:
+                    Full_order_edges[(index2, index1)] = dist
+        return Full_order_edges, dist_matrix
+
+def generate_cont_matrix(df):
+    contiguity_matrix = pd.DataFrame(0, index=df.index, columns=df.index)
+    for index, row in df.iterrows():
+        for n in row.neighbors:
+            contiguity_matrix.loc[index, n] = 1
+    return contiguity_matrix
