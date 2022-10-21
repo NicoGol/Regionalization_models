@@ -132,14 +132,6 @@ class HPRegio:
                 self.merge(l,m) # changing clusters, changing contiguity and changing dist_C
                 edges[e[0]] += [e[1]]
                 edges[e[1]] += [e[0]]
-                # if e[0] in edges:
-                #     edges[e[0]] += [e[1]]
-                # else:
-                #     edges[e[0]] = [e[1]]
-                # if e[1] in edges:
-                #     edges[e[1]] += [e[0]]
-                # else:
-                #     edges[e[1]] = [e[0]]
                 i += 1
         t2 = t.time()
         self.times['SCT'] = t2-t1
@@ -225,42 +217,6 @@ class HPRegio:
             print('end LNS ' + str(self.times['LNS']))
         self.sols[k] = best_sol
         return self.sols[k].H, self.sols[k].to_list()
-
-    # def LNS(self,k,sc):
-    #     if self.talk:
-    #         print('start LNS')
-    #     t1 = t.time()
-    #     best_h = {i: h for i, h in enumerate(self.he[k])}
-    #     best_regions = {i: r for i,r in enumerate(self.regions[k])}
-    #     best_neighbors = {i: {v:[e for e in HPTree.dict_regions[str(r)].neighbors[v] if e in best_regions[i]] for v in HPTree.dict_regions[str(r)].neighbors.keys() if v in best_regions[i]} for i, r in enumerate(self.regions[k])}
-    #     best_edges = {i:[e for e in self.SCT.edges.keys() if e[0] in best_regions[i] and e[1] in best_regions[i]] for i in range(k)}
-    #     not_tested = {(i,j) for i in range(k-1) for j in range(i+1,k)}
-    #     while len(not_tested) > 0:
-    #         (i,j) = random.choice(tuple(not_tested))
-    #         if sum(sum(self.cont_m.loc[best_regions[i],best_regions[j]].values))>0:
-    #             e, h, h1, h2, vertex1, vertex2, neighbors, edges = self.regroup_and_cut(best_regions[i],best_regions[j],best_neighbors[i],best_neighbors[j],best_edges[i],best_edges[j],sc)
-    #             if e is not None and h < best_h[i] + best_h[j]:
-    #                 neighbors[e[0]] = [v for v in neighbors[e[0]] if v != e[1]]
-    #                 neighbors[e[1]] = [v for v in neighbors[e[1]] if v != e[0]]
-    #                 best_h[i] = h1
-    #                 best_h[j] = h2
-    #                 best_regions[i] = vertex1
-    #                 best_regions[j] = vertex2
-    #                 best_neighbors[i] = {v:neighbors[v] for v in neighbors.keys() if v in vertex1}
-    #                 best_neighbors[j] = {v:neighbors[v] for v in neighbors.keys() if v in vertex2}
-    #                 best_edges[i] = [e for e in edges if e[0] in vertex1 and e[1] in vertex1]
-    #                 best_edges[j] = [e for e in edges if e[0] in vertex2 and e[1] in vertex2]
-    #                 not_tested.update([(min(i, l),max(i,l)) for l in range(k) if i != l])
-    #                 not_tested.update([(min(j, l),max(j,l)) for l in range(k) if j != l])
-    #         not_tested.remove((i,j))
-    #     t2 = t.time()
-    #     self.times['LNS'] = t2 - t1
-    #     if self.talk:
-    #         print('end LNS ' + str(self.times['LNS']))
-    #     self.regions[k] = best_regions.values()
-    #     self.he[k] = best_h.values()
-    #     self.H[k] = sum(self.he[k])
-    #     return self.H[k], best_regions
 
     def regroup_and_cut(self,r1,r2,sc):
         min_dist = float('inf')

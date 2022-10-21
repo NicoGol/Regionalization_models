@@ -117,8 +117,8 @@ class HPTree():
                     w=1
                 new_trees = self.tree_partitioning(w,sc,n_best,talk=talk)
                 for tree in new_trees:
-                    self.children.append(tree)
                     tree.find_regions(k, limit_depth, w_list, sc_list, n_best, index_w, index_sc, depth=depth+1,talk=talk)
+                    self.children.append(HPTree.dict_regions[str(tree.vertex)])
                 self.compute_best_h(w,k)
 
 

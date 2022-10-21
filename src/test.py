@@ -1,32 +1,39 @@
 from data import *
 from HPR import HPR
-from redcap import *
+from literature_models import *
+import cls
 
-# k=10
+# k=5
+# edu_BE = pd.read_pickle('../data/education_BE.pkl')
 # edu_BE_dist = pd.read_pickle('../data/education_BE_dist.pkl')
 # edu_BE_cont = pd.read_pickle('../data/education_BE_cont.pkl')
-# HPR,h,regions = HPR(k,[(0,2)],edu_BE_cont,edu_BE_dist,LNS=True,talk=True)
+# HPR = HPR(k,[(0,2)],edu_BE_cont,edu_BE_dist,LNS=False,talk=True)
+# H_redcap, regions_redcap, t_redcap = redcap(edu_BE,k,['EDU_LOW_r', 'EDU_MID_r', 'EDU_HIGH_r'],edu_BE_dist)
 
 ############################################################################
 
-k=15
-Ecoregions_dist = pd.read_pickle('../data/USA_ecoregions_dist.pkl')
-Ecoregions_cont = pd.read_pickle('../data/USA_ecoregions_cont.pkl')
-HPR,h,regions = HPR(k,[(0,2)],Ecoregions_cont,Ecoregions_dist,LNS=True,talk=True)
+# k=15
+# Ecoregions_dist = pd.read_pickle('../data/USA_ecoregions_dist.pkl')
+# Ecoregions_cont = pd.read_pickle('../data/USA_ecoregions_cont.pkl')
+# HPR,h,regions = HPR(k,[(0,2)],Ecoregions_cont,Ecoregions_dist,LNS=True,talk=True)
 
 ############################################################################
 
-# EU_NUTS3_cont = pd.read_pickle('../data/NUTS1_all_cont.pkl')
-# EU_NUTS3_dist = pd.read_pickle('../data/NUTS1_all_dist.pkl')
-# k=10
-# HPR,h,regions = HPR(k,[(0,2)],EU_NUTS3_cont,EU_NUTS3_dist,LNS=True,talk=True)
+# EU_NUTS1 = pd.read_pickle('../data/ecodemo_NUTS1.pkl')
+# EU_NUTS1_cont = pd.read_pickle('../data/ecodemo_NUTS1_cont.pkl')
+# EU_NUTS1_dist = pd.read_pickle('../data/ecodemo_NUTS1_dist.pkl')
+# k=5
+# HPR = HPR(k,[(0,2)],EU_NUTS1_cont,EU_NUTS1_dist,LNS=False,talk=True)
+# H_redcap, regions_redcap, t_redcap = redcap(EU_NUTS1,k,['density','gdp_inhabitant','median_age','rate_migration'],EU_NUTS1_dist)
 
 #############################################################################
 
-# k=10
-# EU_NUTS2_cont = pd.read_pickle('../data/NUTS2_all_cont.pkl')
-# EU_NUTS2_dist = pd.read_pickle('../data/NUTS2_all_dist.pkl')
-# HPR,h,regions = HPR(k,[(0,2)],EU_NUTS2_cont,EU_NUTS2_dist,LNS=True,talk=True)
+# EU_NUTS2 = pd.read_pickle('../data/ecodemo_NUTS2.pkl')
+# EU_NUTS2_cont = pd.read_pickle('../data/ecodemo_NUTS2_cont.pkl')
+# EU_NUTS2_dist = pd.read_pickle('../data/ecodemo_NUTS2_dist.pkl')
+# k=5
+# HPR = HPR(k,[(0,2)],EU_NUTS2_cont,EU_NUTS2_dist,max_depth=4,LNS=False,talk=True)
+# H_redcap, regions_redcap, t_redcap = redcap(EU_NUTS2,k,['density','gdp_inhabitant','median_age','rate_migration'],EU_NUTS2_dist)
 
 #############################################################################
 
@@ -93,3 +100,5 @@ HPR,h,regions = HPR(k,[(0,2)],Ecoregions_cont,Ecoregions_dist,LNS=True,talk=True
 # res_redcap, x_redcap, t_redcap = redcap(ecodemo_eu,k,indicators,talk=True)
 #
 # h,r=root.LNS(10,10,10)
+
+
